@@ -1,0 +1,49 @@
+{
+  "name": "botson-ai-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Botson AI Analyzer",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.ts",
+    "test": "echo \"No tests yet\" && exit 0",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "import-data": "ts-node src/utils/importData.ts"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "typescript",
+    "mongodb",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@botson/shared": "file:../shared",
+    "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "joi": "^17.13.3",
+    "lodash": "^4.17.21",
+    "mongoose": "^8.16.3",
+    "morgan": "^1.10.0",
+    "openai": "^5.9.2"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.2",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/joi": "^17.2.2",
+    "@types/lodash": "^4.17.20",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.0.14",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
