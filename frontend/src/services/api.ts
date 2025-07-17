@@ -1,12 +1,12 @@
-// src/services/api.ts
-import axios, { type AxiosInstance, AxiosError } from "axios";
+// Fixed API Service - frontend/src/services/api.ts
+import axios, { type AxiosInstance } from "axios";
 import type {
-  IndexingLog,
   DashboardFilters,
+  IndexingLog,
   DashboardMetrics,
-  APIResponse,
   TimeSeriesData,
   ClientPerformance,
+  APIResponse,
 } from "@botson/shared";
 import type { HealthCheckResponse } from "../types/health";
 import type {
@@ -14,19 +14,11 @@ import type {
   SendChatMessageResponse,
 } from "../types/chat";
 
-// API Error type
-export interface APIError {
-  success: false;
-  error: string;
-  details?: string;
-  status?: number;
-}
-
-// Status distribution interface
+// Status distribution interface (not in shared types)
 export interface StatusDistribution {
-  name: string;
-  value: number;
-  color: string;
+  status: string;
+  count: number;
+  percentage: number;
 }
 
 class ApiService {
@@ -35,75 +27,73 @@ class ApiService {
   constructor() {
     this.axiosInstance = axios.create({
       baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
-      timeout: 10000, // 10 seconds timeout
+      timeout: 30000, // 30 seconds for AI responses
       headers: {
         "Content-Type": "application/json",
       },
     });
 
-    // Request interceptor for debugging
+    // Request interceptor
     this.axiosInstance.interceptors.request.use(
       (config) => {
-        if (import.meta.env.DEV) {
-          console.log(
-            `🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`
-          );
-        }
+        console.log(
+          `Making ${config.method?.toUpperCase()} request to ${config.url}`
+        );
         return config;
       },
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor for error handling
+    // Response interceptor
     this.axiosInstance.interceptors.response.use(
-      (response) => {
-        if (import.meta.env.DEV) {
-          console.log(
-            `✅ API Response: ${response.status} ${response.config.url}`
-          );
-        }
-        return response;
-      },
-      (error: AxiosError) => {
-        const apiError: APIError = {
-          success: false,
-          error: error.message || "An error occurred",
-          status: error.response?.status,
-        };
-
-        if (error.response?.data) {
-          const responseData = error.response.data as any;
-          apiError.error =
-            responseData.error || responseData.message || apiError.error;
-          apiError.details = responseData.details;
-        }
-
-        console.error("❌ API Error:", apiError);
-        return Promise.reject(apiError);
+      (response) => response,
+      (error) => {
+        console.error("API Error:", error.response?.data || error.message);
+        return Promise.reject(error);
       }
     );
   }
 
-  // Helper method to build query parameters
+  // Helper method to build query parameters - Fixed to match DashboardFilters structure
   private buildQueryParams(filters: DashboardFilters): URLSearchParams {
     const params = new URLSearchParams();
 
-    if (filters.startDate) params.append("startDate", filters.startDate);
-    if (filters.endDate) params.append("endDate", filters.endDate);
-    if (filters.client) params.append("client", filters.client);
-    if (filters.country) params.append("country", filters.country);
-    if (filters.status) params.append("status", filters.status);
-    if (filters.page) params.append("page", filters.page.toString());
-    if (filters.limit) params.append("limit", filters.limit.toString());
+    // Fixed: Use 'client' instead of 'clients' (singular, as string not array)
+    if (filters.client) {
+      params.append("client", filters.client);
+    }
+
+    // Fixed: Use 'country' instead of 'countries' (singular, as string not array)
+    if (filters.country) {
+      params.append("country", filters.country);
+    }
+
+    // Fixed: status is a string, not array
+    if (filters.status) {
+      params.append("status", filters.status);
+    }
+
+    if (filters.startDate) {
+      params.append("startDate", filters.startDate);
+    }
+
+    if (filters.endDate) {
+      params.append("endDate", filters.endDate);
+    }
 
     return params;
   }
 
-  // Get indexing logs with filters (main dashboard data)
-  async getIndexingLogs(
+  // Get paginated logs with filters
+  async getLogs(
+    page: number = 1,
+    limit: number = 100,
     filters: DashboardFilters = {}
   ): Promise<APIResponse<IndexingLog[]>> {
     const params = this.buildQueryParams(filters);
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+
     const endpoint = `/api/dashboard${
       params.toString() ? `?${params.toString()}` : ""
     }`;
@@ -191,20 +181,162 @@ class ApiService {
   // Health check endpoint
   async healthCheck(): Promise<HealthCheckResponse> {
     const response = await this.axiosInstance.get<HealthCheckResponse>(
-      "/health"
+      "/api/health"
     );
     return response.data;
   }
 
-  // Chat AI endpoint (type-safe)
+  // AI Assistant endpoint - Updated to use the correct route and request format
+  async sendAssistantMessage(
+    request: SendChatMessageRequest
+  ): Promise<SendChatMessageResponse> {
+    try {
+      // Transform the request to match backend's expected format
+      const backendRequest = {
+        question: request.message, // Backend expects 'question', not 'message'
+      };
+
+      console.log("Sending to backend:", backendRequest);
+
+      const response = await this.axiosInstance.post(
+        "/api/assistant", // Updated to match your backend route
+        backendRequest
+      );
+
+      console.log("Backend response:", response.data);
+
+      // Transform backend response to match frontend expectations
+      const backendData = response.data;
+
+      // Handle different response types from backend
+      if (backendData.type === "success") {
+        return {
+          success: true,
+          data: {
+            message: backendData.message,
+            type: backendData.responseType || "text",
+            timestamp: new Date().toISOString(),
+            data: backendData.data,
+            query: backendData.query,
+          },
+        };
+      } else if (backendData.type === "clarification") {
+        return {
+          success: true,
+          data: {
+            message: `${backendData.message}\n\nSuggestions:\n${
+              backendData.suggestions?.join("\n") || ""
+            }`,
+            type: "text" as const,
+            timestamp: new Date().toISOString(),
+          },
+        };
+      } else if (backendData.type === "unsupported") {
+        return {
+          success: true,
+          data: {
+            message: `${backendData.message}\n\n${
+              backendData.suggestions?.join("\n") || ""
+            }`,
+            type: "text" as const,
+            timestamp: new Date().toISOString(),
+          },
+        };
+      } else if (backendData.type === "no_data") {
+        return {
+          success: true,
+          data: {
+            message: `${backendData.message}\n\nHint: ${
+              backendData.hint || ""
+            }`,
+            type: "text" as const,
+            timestamp: new Date().toISOString(),
+          },
+        };
+      } else {
+        // Fallback for unknown response types
+        return {
+          success: true,
+          data: {
+            message: JSON.stringify(backendData, null, 2),
+            type: "text" as const,
+            timestamp: new Date().toISOString(),
+          },
+        };
+      }
+    } catch (error: unknown) {
+      console.error("Error sending assistant message:", error);
+
+      // Handle axios errors specifically
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: { data?: { message?: string } };
+          message: string;
+        };
+        console.error("Axios error details:", axiosError.response?.data);
+
+        return {
+          success: false,
+          error: `Backend error: ${
+            axiosError.response?.data?.message || axiosError.message
+          }`,
+          data: {
+            message:
+              "I'm sorry, I encountered an error processing your request. Please try again.",
+            type: "error" as const,
+            timestamp: new Date().toISOString(),
+          },
+        };
+      }
+
+      // Return a structured error response
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to send message",
+        data: {
+          message:
+            "I'm sorry, I'm having trouble processing your request right now. Please try again.",
+          type: "error" as const,
+          timestamp: new Date().toISOString(),
+        },
+      };
+    }
+  }
+
+  // Legacy method for backward compatibility (can be removed later)
   async sendChatMessage(
     request: SendChatMessageRequest
   ): Promise<SendChatMessageResponse> {
-    const response = await this.axiosInstance.post<SendChatMessageResponse>(
-      "/api/chat",
-      request
-    );
-    return response.data;
+    return this.sendAssistantMessage(request);
+  }
+
+  // Test assistant connection
+  async testAssistantConnection(): Promise<boolean> {
+    try {
+      // Use a proper database query that Gemini will understand and process
+      const testRequest = {
+        question: "What is the total number of jobs in the collection?", // Valid question for testing
+      };
+
+      const response = await this.axiosInstance.post(
+        "/api/assistant",
+        testRequest
+      );
+
+      // Accept any valid response type from backend (success, clarification, no_data, etc.)
+      // We just want to confirm the backend can process requests
+      return (
+        response.status === 200 &&
+        response.data &&
+        (response.data.type === "success" ||
+          response.data.type === "clarification" ||
+          response.data.type === "no_data")
+      );
+    } catch (error) {
+      console.error("Assistant connection test failed:", error);
+      return false;
+    }
   }
 
   // Utility method to test API connection

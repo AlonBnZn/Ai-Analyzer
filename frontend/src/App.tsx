@@ -1,8 +1,6 @@
-// Dark Theme App.tsx with Navigation
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// Fixed App Layout - frontend/src/App.tsx
 import { useState } from "react";
-import Dashboard from "./pages/Dashboard";
-import ChatAssistant from "./components/ChatAssistant";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   ChartBarIcon,
   SparklesIcon,
@@ -10,50 +8,55 @@ import {
   Cog6ToothIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import Dashboard from "./pages/Dashboard";
+import ChatAssistant from "./components/ChatAssistant";
 import "./App.css";
 
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,
     },
   },
 });
 
 function App() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "chat">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "assistant">(
+    "dashboard"
+  );
   const [notifications] = useState(3);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col">
         {/* Header */}
-        <header className="border-b border-gray-700/50 bg-gray-900/90 backdrop-blur-xl sticky top-0 z-50">
+        <header className="sticky top-0 z-50 backdrop-blur-xl bg-gray-900/80 border-b border-gray-700/50 flex-shrink-0">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
-              {/* Logo and Brand */}
-              <div className="flex items-center space-x-4">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                  <span className="text-lg font-bold text-white">B</span>
+              {/* Logo and Navigation */}
+              <div className="flex items-center space-x-8">
+                {/* Logo */}
+                <div className="flex items-center space-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-blue-500">
+                    <ChartBarIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-white">
+                      Botson AI Analyzer
+                    </h1>
+                    <p className="text-xs text-gray-400">
+                      Job Indexing Analytics
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white">
-                    Botson AI Analyzer
-                  </h1>
-                  <p className="text-xs text-gray-400">
-                    Job Indexing Analytics Platform
-                  </p>
-                </div>
-              </div>
 
-              {/* Navigation Tabs */}
-              <div className="flex items-center space-x-6">
-                <nav className="flex items-center space-x-1 bg-gray-800/50 rounded-xl p-1 backdrop-blur-sm border border-gray-700/50">
+                {/* Navigation */}
+                <nav className="flex space-x-1">
                   <button
                     onClick={() => setActiveTab("dashboard")}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                    className={`flex items-center space-x-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300 ${
                       activeTab === "dashboard"
                         ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg"
                         : "text-gray-300 hover:text-white hover:bg-gray-700/50"
@@ -63,9 +66,9 @@ function App() {
                     <span>Analytics Dashboard</span>
                   </button>
                   <button
-                    onClick={() => setActiveTab("chat")}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                      activeTab === "chat"
+                    onClick={() => setActiveTab("assistant")}
+                    className={`flex items-center space-x-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300 ${
+                      activeTab === "assistant"
                         ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg"
                         : "text-gray-300 hover:text-white hover:bg-gray-700/50"
                     }`}
@@ -118,52 +121,25 @@ function App() {
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="space-y-8">
+        {/* Main Content - Fixed height calculation */}
+        <main className="flex-1 overflow-hidden">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 h-full">
             {/* Page Content */}
-            <div
-              className={`transition-all duration-500 ${
-                activeTab === "dashboard"
-                  ? "opacity-100"
-                  : "opacity-0 pointer-events-none absolute"
-              }`}
-            >
-              {activeTab === "dashboard" && <Dashboard />}
-            </div>
+            {activeTab === "dashboard" && (
+              <div className="h-full">
+                <Dashboard />
+              </div>
+            )}
 
-            <div
-              className={`transition-all duration-500 ${
-                activeTab === "chat"
-                  ? "opacity-100"
-                  : "opacity-0 pointer-events-none absolute"
-              }`}
-            >
-              {activeTab === "chat" && <ChatAssistant />}
-            </div>
+            {activeTab === "assistant" && (
+              <div className="h-full flex items-center justify-center">
+                <div className="w-full max-w-4xl">
+                  <ChatAssistant />
+                </div>
+              </div>
+            )}
           </div>
         </main>
-
-        {/* Footer */}
-        <footer className="border-t border-gray-700/50 bg-gray-900/50 backdrop-blur-xl mt-16">
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                  <span className="text-xs font-bold text-white">B</span>
-                </div>
-                <div className="text-sm text-gray-400">
-                  © 2024 Botson AI Analyzer. All rights reserved.
-                </div>
-              </div>
-              <div className="flex items-center space-x-6 text-sm text-gray-400">
-                <span>Version 1.0.0</span>
-                <span>•</span>
-                <span>Last updated: {new Date().toLocaleDateString()}</span>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
     </QueryClientProvider>
   );
