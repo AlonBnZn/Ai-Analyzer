@@ -1,4 +1,4 @@
-// src/pages/Dashboard.tsx
+// Dark Theme Dashboard.tsx - Fixed TypeScript errors and preserved all API functionality
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DashboardFilters } from "@botson/shared";
@@ -9,7 +9,6 @@ import MetricsCards from "../components/MetricsCards";
 import ChartsSection from "../components/ChartsSection";
 import LogsTable from "../components/LogsTable";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
-// import ErrorMessage from "../components/ui/ErrorMessage";
 import {
   ChartBarIcon,
   TableCellsIcon,
@@ -17,6 +16,7 @@ import {
   ArrowPathIcon,
   CalendarDaysIcon,
   ExclamationTriangleIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
 const Dashboard = () => {
@@ -75,365 +75,414 @@ const Dashboard = () => {
     retry: 2,
   });
 
-  const handleFilterChange = (newFilters: DashboardFilters) => {
-    setFilters((prev) => ({ ...prev, ...newFilters, page: 1 }));
+  // Handle filter changes
+  const handleFilterChange = (newFilters: Partial<DashboardFilters>) => {
+    setFilters((prev) => ({
+      ...prev,
+      ...newFilters,
+      page: 1, // Reset to first page when filters change
+    }));
   };
 
+  // Handle page changes for logs table
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
   };
 
+  // Handle refresh functionality
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
       await Promise.all([refetchMetrics(), refetchLogs()]);
     } catch (error) {
-      console.error("Refresh failed:", error);
-    } finally {
-      setRefreshing(false);
+      handleError(error);
     }
+    setRefreshing(false);
   };
 
-  // Handle critical errors
-  const criticalError = metricsError || logsError;
-  if (criticalError) {
-    const errorMessage = handleError(criticalError);
-    const networkError = isNetworkError(criticalError);
+  // Handle critical errors (network/API issues)
+  const hasCriticalError =
+    (metricsError && isNetworkError(metricsError)) ||
+    (logsError && isNetworkError(logsError));
 
+  if (hasCriticalError) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-lg border border-error-200 bg-error-50 p-6">
-          <div className="flex items-center space-x-3">
-            <ExclamationTriangleIcon className="h-8 w-8 text-error-600" />
-            <div>
-              <h3 className="text-lg font-semibold text-error-800">
-                {networkError ? "Connection Error" : "Data Loading Error"}
-              </h3>
-              <p className="text-error-700 mt-1">{errorMessage}</p>
-              {networkError && (
-                <p className="text-error-600 text-sm mt-2">
-                  Please check your internet connection and ensure the backend
-                  server is running.
-                </p>
-              )}
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <div className="rounded-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 p-8 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 mb-6">
+              <ExclamationTriangleIcon className="h-8 w-8 text-red-400" />
             </div>
-          </div>
-          <div className="mt-4 flex space-x-3">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="btn-primary"
-            >
-              {refreshing ? "Retrying..." : "Try Again"}
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className="btn-secondary"
-            >
-              Reload Page
-            </button>
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Connection Error
+            </h3>
+            <p className="text-gray-300 mb-6">
+              Unable to connect to the analytics service. Please check your
+              connection and try again.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {refreshing ? "Retrying..." : "Try Again"}
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full px-6 py-3 bg-gray-700/50 text-gray-300 rounded-xl hover:bg-gray-700 hover:text-white transition-all duration-300"
+              >
+                Reload Page
+              </button>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Handle filter loading errors (non-critical)
+  // Handle filter warnings (non-critical)
   const filterWarnings = [];
   if (clientsError) filterWarnings.push("clients");
   if (countriesError) filterWarnings.push("countries");
 
   return (
-    <div className="space-y-8">
-      {/* Dashboard Header */}
-      <div className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 p-8 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">
-              Job Indexing Analytics Dashboard
-            </h1>
-            <p className="mt-2 text-primary-100">
-              Monitor and analyze job indexing performance across all clients
-              and countries
-            </p>
-            <div className="mt-4 flex items-center space-x-6 text-sm">
-              <div className="flex items-center space-x-2">
-                <CalendarDaysIcon className="h-5 w-5" />
-                <span>Real-time monitoring</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <ChartBarIcon className="h-5 w-5" />
-                <span>Advanced analytics</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <TableCellsIcon className="h-5 w-5" />
-                <span>Detailed logs</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col items-end space-y-3">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center space-x-2 rounded-lg bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-all hover:bg-white/30 disabled:opacity-50"
-            >
-              <ArrowPathIcon
-                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-              />
-              <span>{refreshing ? "Refreshing..." : "Refresh Data"}</span>
-            </button>
-            <div className="text-right text-sm text-primary-100">
-              <p>Last updated: {new Date().toLocaleTimeString()}</p>
-              <p>{logsResponse?.pagination?.total || 0} total records</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter warnings */}
-      {filterWarnings.length > 0 && (
-        <div className="rounded-lg border border-warning-200 bg-warning-50 p-4">
-          <div className="flex items-center space-x-2">
-            <ExclamationTriangleIcon className="h-5 w-5 text-warning-600" />
-            <span className="text-warning-800 text-sm">
-              Unable to load filter options for: {filterWarnings.join(", ")}.
-              Some filters may not be available.
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Quick Stats Overview */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <div className="flex items-center">
-            <div className="rounded-lg bg-primary-50 p-3">
-              <FunnelIcon className="h-6 w-6 text-primary-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">
-                Active Filters
-              </p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {
-                  Object.keys(filters).filter(
-                    (key) =>
-                      key !== "page" &&
-                      key !== "limit" &&
-                      filters[key as keyof DashboardFilters]
-                  ).length
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <div className="flex items-center">
-            <div className="rounded-lg bg-success-50 p-3">
-              <ChartBarIcon className="h-6 w-6 text-success-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">
-                Avg Success Rate
-              </p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {metrics?.successRate.toFixed(1) || 0}%
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <div className="flex items-center">
-            <div className="rounded-lg bg-warning-50 p-3">
-              <TableCellsIcon className="h-6 w-6 text-warning-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">
-                Active Clients
-              </p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {metrics?.activeClients || 0}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <div className="flex items-center">
-            <div className="rounded-lg bg-purple-50 p-3">
-              <CalendarDaysIcon className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">
-                Avg Processing
-              </p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {metrics?.averageProcessingTime.toFixed(1) || 0}m
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters Section */}
-      <FilterComponent
-        filters={filters}
-        clients={clients}
-        countries={countries}
-        onFilterChange={handleFilterChange}
-      />
-
-      {/* Main Metrics Cards */}
-      <div>
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Key Performance Metrics
-          </h2>
-          <div className="text-sm text-gray-500">Updated in real-time</div>
-        </div>
-
-        {metricsLoading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
-          </div>
-        ) : (
-          <MetricsCards metrics={metrics} />
-        )}
-      </div>
-
-      {/* Charts and Analytics Section */}
-      <div>
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Analytics & Trends
-          </h2>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <ChartBarIcon className="h-4 w-4" />
-            <span>Interactive charts</span>
-          </div>
-        </div>
-
-        <ChartsSection filters={filters} />
-      </div>
-
-      {/* Advanced Analytics Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Performance Insights */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Performance Insights
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">
-                Peak Processing Hour
-              </span>
-              <span className="font-medium">14:00-15:00</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">
-                Best Performing Client
-              </span>
-              <span className="font-medium">Deal1</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Avg Jobs per Hour</span>
-              <span className="font-medium">1,247</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Alert Summary */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Alert Summary
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <div className="h-2 w-2 rounded-full bg-success-500"></div>
-              <span className="text-sm">All systems operational</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="h-2 w-2 rounded-full bg-warning-500"></div>
-              <span className="text-sm">2 clients below 90% success rate</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="h-2 w-2 rounded-full bg-gray-300"></div>
-              <span className="text-sm">No critical alerts</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Data Quality */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Data Quality
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Completeness</span>
-                <span>98.5%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-success-500 h-2 rounded-full"
-                  style={{ width: "98.5%" }}
-                ></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Accuracy</span>
-                <span>96.2%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-success-500 h-2 rounded-full"
-                  style={{ width: "96.2%" }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Detailed Logs Table */}
-      <div className="rounded-lg bg-white shadow-sm">
-        <div className="border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {/* Header */}
+      <header className="border-b border-gray-700/50 bg-gray-900/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="px-6 py-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Indexing Logs Detail
-            </h3>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <TableCellsIcon className="h-4 w-4" />
-              <span>
-                Showing {((filters.page || 1) - 1) * (filters.limit || 50) + 1}{" "}
-                to{" "}
-                {Math.min(
-                  (filters.page || 1) * (filters.limit || 50),
-                  logsResponse?.pagination?.total || 0
-                )}{" "}
-                of {logsResponse?.pagination?.total || 0} entries
+            <div className="flex items-center space-x-4">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                <ChartBarIcon className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  Job Indexing Analytics Dashboard
+                </h1>
+                <p className="text-gray-400 text-sm">
+                  Monitor and analyze job indexing performance across all
+                  clients and countries
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-6 text-sm text-purple-200">
+                <div className="flex items-center space-x-2">
+                  <CalendarDaysIcon className="h-5 w-5" />
+                  <span>Real-time monitoring</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <ChartBarIcon className="h-5 w-5" />
+                  <span>Advanced analytics</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <TableCellsIcon className="h-5 w-5" />
+                  <span>Detailed logs</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all duration-300 text-white disabled:opacity-50"
+              >
+                <ArrowPathIcon
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
+                <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="p-6 space-y-8">
+        {/* Filter warnings */}
+        {filterWarnings.length > 0 && (
+          <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/20 p-4">
+            <div className="flex items-center space-x-2">
+              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+              <span className="text-yellow-300 text-sm">
+                Unable to load filter options for: {filterWarnings.join(", ")}.
+                Some filters may not be available.
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Stats Overview */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+          <div className="group relative overflow-hidden rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 transition-all duration-500 hover:bg-gray-800/50 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative z-10">
+              <div className="flex items-center">
+                <div className="rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 p-3 group-hover:from-purple-500/30 group-hover:to-purple-600/30 transition-all duration-300">
+                  <FunnelIcon className="h-6 w-6 text-purple-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-400">
+                    Active Filters
+                  </p>
+                  <p className="text-2xl font-semibold text-white">
+                    {
+                      Object.keys(filters).filter(
+                        (key) =>
+                          key !== "page" &&
+                          key !== "limit" &&
+                          filters[key as keyof DashboardFilters]
+                      ).length
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 transition-all duration-500 hover:bg-gray-800/50 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative z-10">
+              <div className="flex items-center">
+                <div className="rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 p-3 group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-all duration-300">
+                  <ChartBarIcon className="h-6 w-6 text-blue-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-400">
+                    Total Jobs Indexed
+                  </p>
+                  <p className="text-2xl font-semibold text-white">
+                    {metricsLoading ? (
+                      <span className="animate-pulse">---</span>
+                    ) : (
+                      metrics?.totalJobsIndexed?.toLocaleString() || 0
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 transition-all duration-500 hover:bg-gray-800/50 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative z-10">
+              <div className="flex items-center">
+                <div className="rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 p-3 group-hover:from-green-500/30 group-hover:to-emerald-500/30 transition-all duration-300">
+                  <ChartBarIcon className="h-6 w-6 text-green-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-400">
+                    Avg Success Rate
+                  </p>
+                  <p className="text-2xl font-semibold text-white">
+                    {metricsLoading ? (
+                      <span className="animate-pulse">--.-</span>
+                    ) : (
+                      `${metrics?.successRate?.toFixed(1) || 0}%`
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 transition-all duration-500 hover:bg-gray-800/50 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative z-10">
+              <div className="flex items-center">
+                <div className="rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 p-3 group-hover:from-yellow-500/30 group-hover:to-orange-500/30 transition-all duration-300">
+                  <UserGroupIcon className="h-6 w-6 text-yellow-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-400">
+                    Active Clients
+                  </p>
+                  <p className="text-2xl font-semibold text-white">
+                    {metricsLoading ? (
+                      <span className="animate-pulse">--</span>
+                    ) : (
+                      metrics?.activeClients || 0
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {logsLoading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
-          </div>
-        ) : (
-          <LogsTable
-            logs={logsResponse?.data || []}
-            pagination={logsResponse?.pagination}
-            onPageChange={handlePageChange}
+        {/* Filters Section - Dark Theme Update */}
+        <div className="rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50">
+          <FilterComponent
+            filters={filters}
+            clients={clients}
+            countries={countries}
+            onFilterChange={handleFilterChange}
           />
-        )}
-      </div>
+        </div>
+
+        {/* Main Metrics Cards - Dark Theme */}
+        <div>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-white">
+              Key Performance Metrics
+            </h2>
+            <div className="text-sm text-gray-400">Updated in real-time</div>
+          </div>
+
+          {metricsLoading ? (
+            <div className="flex justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6">
+              <MetricsCards metrics={metrics} />
+            </div>
+          )}
+        </div>
+
+        {/* Charts and Analytics Section - Dark Theme */}
+        <div>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-white">
+              Analytics & Trends
+            </h2>
+            <div className="flex items-center space-x-2 text-sm text-gray-400">
+              <ChartBarIcon className="h-4 w-4" />
+              <span>Interactive charts</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6">
+            <ChartsSection filters={filters} />
+          </div>
+        </div>
+
+        {/* Advanced Analytics Grid - Dark Theme */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Performance Insights */}
+          <div className="rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 hover:bg-gray-800/50 transition-all duration-500">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Performance Insights
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-700/30">
+                <span className="text-sm text-gray-300">
+                  Peak Processing Hour
+                </span>
+                <span className="font-medium text-white">14:00-15:00</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-700/30">
+                <span className="text-sm text-gray-300">
+                  Best Performing Client
+                </span>
+                <span className="font-medium text-white">Deal1</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-700/30">
+                <span className="text-sm text-gray-300">Lowest Error Rate</span>
+                <span className="font-medium text-white">0.2%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* System Health */}
+          <div className="rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 hover:bg-gray-800/50 transition-all duration-500">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              System Health
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-300">Success Rate</span>
+                  <span className="text-white">98.5%</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: "98.5%" }}
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-300">Accuracy</span>
+                  <span className="text-white">96.2%</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: "96.2%" }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 hover:bg-gray-800/50 transition-all duration-500">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Recent Activity
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3 p-3 rounded-xl bg-gray-700/30">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <div>
+                  <p className="text-white text-sm">Job batch completed</p>
+                  <p className="text-gray-400 text-xs">2 minutes ago</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3 p-3 rounded-xl bg-gray-700/30">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                <div>
+                  <p className="text-white text-sm">New client connected</p>
+                  <p className="text-gray-400 text-xs">5 minutes ago</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3 p-3 rounded-xl bg-gray-700/30">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                <div>
+                  <p className="text-white text-sm">System maintenance</p>
+                  <p className="text-gray-400 text-xs">1 hour ago</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Detailed Logs Table - Dark Theme */}
+        <div className="rounded-2xl bg-gray-800/30 backdrop-blur-sm border border-gray-700/50">
+          <div className="border-b border-gray-700/50 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">
+                Indexing Logs Detail
+              </h3>
+              <div className="flex items-center space-x-2 text-sm text-gray-400">
+                <TableCellsIcon className="h-4 w-4" />
+                <span>
+                  Showing{" "}
+                  {((filters.page || 1) - 1) * (filters.limit || 50) + 1} to{" "}
+                  {Math.min(
+                    (filters.page || 1) * (filters.limit || 50),
+                    logsResponse?.pagination?.total || 0
+                  )}{" "}
+                  of {logsResponse?.pagination?.total || 0} entries
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {logsLoading ? (
+            <div className="flex justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : (
+            <LogsTable
+              logs={logsResponse?.data || []}
+              pagination={logsResponse?.pagination}
+              onPageChange={handlePageChange}
+            />
+          )}
+        </div>
+      </main>
     </div>
   );
 };

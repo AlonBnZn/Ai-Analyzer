@@ -1,12 +1,13 @@
-// src/components/DashboardFilters.tsx
+// Dark Theme DashboardFilters.tsx
 import { useState } from "react";
 import type { DashboardFilters } from "@botson/shared";
 import {
   CalendarIcon,
   FunnelIcon,
   XMarkIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from "@heroicons/react/24/outline";
-import { format } from "date-fns";
 
 interface DashboardFiltersProps {
   filters: DashboardFilters;
@@ -46,23 +47,25 @@ const DashboardFiltersComponent = ({
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm">
-      <div className="px-6 py-4 border-b border-gray-200">
+    <div className="rounded-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50">
+      <div className="px-6 py-4 border-b border-gray-700/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <FunnelIcon className="h-5 w-5 text-gray-500" />
-            <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20">
+              <FunnelIcon className="h-5 w-5 text-purple-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Filters</h3>
             {hasActiveFilters && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border border-purple-500/30">
                 Active
               </span>
             )}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             {hasActiveFilters && (
               <button
                 onClick={handleClearFilters}
-                className="text-sm text-gray-500 hover:text-gray-700 flex items-center space-x-1"
+                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-400 hover:text-white bg-gray-700/50 hover:bg-gray-700 rounded-xl transition-all duration-300"
               >
                 <XMarkIcon className="h-4 w-4" />
                 <span>Clear All</span>
@@ -70,20 +73,30 @@ const DashboardFiltersComponent = ({
             )}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-700/50 hover:bg-gray-700 rounded-xl transition-all duration-300 text-gray-300 hover:text-white"
             >
-              {isExpanded ? "Hide" : "Show"} Filters
+              {isExpanded ? (
+                <EyeSlashIcon className="h-4 w-4" />
+              ) : (
+                <EyeIcon className="h-4 w-4" />
+              )}
+              <span>{isExpanded ? "Hide" : "Show"} Filters</span>
             </button>
           </div>
         </div>
       </div>
 
-      {isExpanded && (
-        <div className="px-6 py-4 space-y-4">
+      {/* Expandable Filter Section */}
+      <div
+        className={`overflow-hidden transition-all duration-500 ease-in-out ${
+          isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {/* Date Range */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-300">
                 Start Date
               </label>
               <div className="relative">
@@ -93,14 +106,14 @@ const DashboardFiltersComponent = ({
                   onChange={(e) =>
                     handleInputChange("startDate", e.target.value)
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="w-full rounded-xl bg-gray-800/50 border border-gray-700 px-4 py-3 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all duration-300"
                 />
-                <CalendarIcon className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+                <CalendarIcon className="absolute right-3 top-3 h-5 w-5 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-300">
                 End Date
               </label>
               <div className="relative">
@@ -108,21 +121,21 @@ const DashboardFiltersComponent = ({
                   type="date"
                   value={filters.endDate || ""}
                   onChange={(e) => handleInputChange("endDate", e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="w-full rounded-xl bg-gray-800/50 border border-gray-700 px-4 py-3 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all duration-300"
                 />
-                <CalendarIcon className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+                <CalendarIcon className="absolute right-3 top-3 h-5 w-5 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
-            {/* Client Filter - IMPROVED */}
+            {/* Client Filter */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-300">
                 Client
               </label>
               <select
                 value={filters.client || ""}
                 onChange={(e) => handleInputChange("client", e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                className="w-full rounded-xl bg-gray-800/50 border border-gray-700 px-4 py-3 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all duration-300"
               >
                 <option value="">All Clients</option>
                 {clients.map((client) => (
@@ -131,24 +144,17 @@ const DashboardFiltersComponent = ({
                   </option>
                 ))}
               </select>
-              {/* Show selected client for clarity */}
-              {filters.client && (
-                <div className="text-xs text-gray-500">
-                  Selected:{" "}
-                  <span className="font-medium">{filters.client}</span>
-                </div>
-              )}
             </div>
 
             {/* Country Filter */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-300">
                 Country
               </label>
               <select
                 value={filters.country || ""}
                 onChange={(e) => handleInputChange("country", e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                className="w-full rounded-xl bg-gray-800/50 border border-gray-700 px-4 py-3 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all duration-300"
               >
                 <option value="">All Countries</option>
                 {countries.map((country) => (
@@ -161,13 +167,13 @@ const DashboardFiltersComponent = ({
 
             {/* Status Filter */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-300">
                 Status
               </label>
               <select
                 value={filters.status || ""}
                 onChange={(e) => handleInputChange("status", e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                className="w-full rounded-xl bg-gray-800/50 border border-gray-700 px-4 py-3 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all duration-300"
               >
                 <option value="">All Status</option>
                 <option value="completed">Completed</option>
@@ -177,114 +183,42 @@ const DashboardFiltersComponent = ({
             </div>
           </div>
 
-          {/* Active Filters Display */}
-          {hasActiveFilters && (
-            <div className="border-t border-gray-200 pt-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-gray-600">Active filters:</span>
-                {filters.client && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                    Client: {filters.client}
-                    <button
-                      onClick={() => handleInputChange("client", "")}
-                      className="ml-1 text-primary-600 hover:text-primary-800"
-                    >
-                      ×
-                    </button>
-                  </span>
-                )}
-                {filters.country && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                    Country: {filters.country}
-                    <button
-                      onClick={() => handleInputChange("country", "")}
-                      className="ml-1 text-primary-600 hover:text-primary-800"
-                    >
-                      ×
-                    </button>
-                  </span>
-                )}
-                {filters.status && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                    Status: {filters.status}
-                    <button
-                      onClick={() => handleInputChange("status", "")}
-                      className="ml-1 text-primary-600 hover:text-primary-800"
-                    >
-                      ×
-                    </button>
-                  </span>
-                )}
-                {(filters.startDate || filters.endDate) && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                    Date Range: {filters.startDate || "Start"} to{" "}
-                    {filters.endDate || "End"}
-                    <button
-                      onClick={() => {
-                        handleInputChange("startDate", "");
-                        handleInputChange("endDate", "");
-                      }}
-                      className="ml-1 text-primary-600 hover:text-primary-800"
-                    >
-                      ×
-                    </button>
-                  </span>
-                )}
-              </div>
+          {/* Quick Filter Presets */}
+          <div className="border-t border-gray-700/50 pt-4">
+            <label className="block text-sm font-medium text-gray-300 mb-3">
+              Quick Filters
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "Last 24 Hours", hours: 24 },
+                { label: "Last 7 Days", hours: 24 * 7 },
+                { label: "Last 30 Days", hours: 24 * 30 },
+              ].map((preset) => (
+                <button
+                  key={preset.label}
+                  onClick={() => {
+                    const endDate = new Date();
+                    const startDate = new Date(
+                      endDate.getTime() - preset.hours * 60 * 60 * 1000
+                    );
+                    handleInputChange(
+                      "startDate",
+                      startDate.toISOString().split("T")[0]
+                    );
+                    handleInputChange(
+                      "endDate",
+                      endDate.toISOString().split("T")[0]
+                    );
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 hover:from-purple-500/30 hover:to-blue-500/30 text-purple-300 hover:text-purple-200 rounded-xl border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300 text-sm"
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
-          )}
-
-          {/* Quick Date Filters */}
-          <div className="flex items-center space-x-2 pt-4 border-t border-gray-200">
-            <span className="text-sm text-gray-500">Quick filters:</span>
-            <button
-              onClick={() => {
-                const today = new Date();
-                const yesterday = new Date(today);
-                yesterday.setDate(yesterday.getDate() - 1);
-                onFilterChange({
-                  ...filters,
-                  startDate: format(yesterday, "yyyy-MM-dd"),
-                  endDate: format(today, "yyyy-MM-dd"),
-                });
-              }}
-              className="rounded-lg px-3 py-1 text-xs transition-colors bg-gray-100 hover:bg-gray-200"
-            >
-              Last 24h
-            </button>
-            <button
-              onClick={() => {
-                const today = new Date();
-                const lastWeek = new Date(today);
-                lastWeek.setDate(lastWeek.getDate() - 7);
-                onFilterChange({
-                  ...filters,
-                  startDate: format(lastWeek, "yyyy-MM-dd"),
-                  endDate: format(today, "yyyy-MM-dd"),
-                });
-              }}
-              className="rounded-lg px-3 py-1 text-xs transition-colors bg-gray-100 hover:bg-gray-200"
-            >
-              Last Week
-            </button>
-            <button
-              onClick={() => {
-                const today = new Date();
-                const lastMonth = new Date(today);
-                lastMonth.setMonth(lastMonth.getMonth() - 1);
-                onFilterChange({
-                  ...filters,
-                  startDate: format(lastMonth, "yyyy-MM-dd"),
-                  endDate: format(today, "yyyy-MM-dd"),
-                });
-              }}
-              className="rounded-lg px-3 py-1 text-xs transition-colors bg-gray-100 hover:bg-gray-200"
-            >
-              Last Month
-            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
