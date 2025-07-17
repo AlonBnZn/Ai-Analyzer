@@ -20,36 +20,35 @@ import { validateAndParseFilters } from "../middleware/queryFilters.middleware";
 
 const router = express.Router();
 
-// Main dashboard routes (matching frontend API calls)
-router.get("/", validateAndParseFilters, getDashboardData); // GET /api/dashboard
+router.get("/", validateAndParseFilters, getDashboardData);
 router.get(
   "/aggregated-metrics",
   validateAndParseFilters,
   getAggregatedMetrics
-); // GET /api/dashboard/aggregated-metrics
-router.get("/time-series", validateAndParseFilters, getTimeSeriesData); // GET /api/dashboard/time-series
-router.get("/clients", validateAndParseFilters, getClientPerformance); // GET /api/dashboard/clients
-router.get("/status", validateAndParseFilters, getStatusDistribution); // GET /api/dashboard/status
+);
+router.get("/time-series", validateAndParseFilters, getTimeSeriesData);
+router.get("/clients", validateAndParseFilters, getClientPerformance);
+router.get("/status", validateAndParseFilters, getStatusDistribution);
 
 // Advanced analytics routes
-router.get("/top-performers", validateAndParseFilters, getTopPerformers); // GET /api/dashboard/top-performers
-router.get("/failure-analysis", validateAndParseFilters, getFailureAnalysis); // GET /api/dashboard/failure-analysis
+router.get("/top-performers", validateAndParseFilters, getTopPerformers);
+router.get("/failure-analysis", validateAndParseFilters, getFailureAnalysis);
 router.get(
   "/performance-trends",
   validateAndParseFilters,
   getPerformanceTrends
-); // GET /api/dashboard/performance-trends
+);
 router.get(
   "/performance-alerts",
   validateAndParseFilters,
   getPerformanceAlerts
-); // GET /api/dashboard/performance-alerts
-router.get("/data-quality", validateAndParseFilters, getDataQualityMetrics); // GET /api/dashboard/data-quality
+);
+router.get("/data-quality", validateAndParseFilters, getDataQualityMetrics);
 
 // Client-specific routes
-router.get("/client/:clientName/stats", getClientStats); // GET /api/dashboard/client/Deal1/stats
+router.get("/client/:clientName/stats", getClientStats);
 
 // Health check for dashboard service
-router.get("/health", getHealthCheck); // GET /api/dashboard/health
+router.get("/health", getHealthCheck);
 
 export default router;
