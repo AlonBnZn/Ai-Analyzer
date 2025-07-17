@@ -3,9 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { Logger } from "./utils/logger";
-import { Request, Response } from "express";
-import JobIndexing from "./models/Jonindexing";
-import axios from "axios";
+import routes from "./routes";
 
 const app = express();
 
@@ -29,7 +27,7 @@ if (process.env.NODE_ENV === "development") {
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// Simple health check endpoint
+// Health check endpoint
 app.get("/health", (req, res) => {
   res.json({
     status: "OK",
@@ -37,6 +35,9 @@ app.get("/health", (req, res) => {
     uptime: process.uptime(),
   });
 });
+
+// API routes
+app.use("/api", routes);
 
 // Test route
 app.get("/api/test", (req, res) => {
@@ -60,29 +61,6 @@ app.get("/api/shared-test", (req, res) => {
       error: "Shared library not working",
       details: error instanceof Error ? error.message : "Unknown error",
     });
-  }
-});
-
-// seed route
-app.get("/api/seed", async (_req: Request, res: Response) => {
-  try {
-    const DATA_URL = process.env.DATA_SOURCE_URL!;
-
-    const { data } = await axios.get(DATA_URL);
-
-    if (!Array.isArray(data)) {
-      return res.status(400).json({ message: "Data is not an array" });
-    }
-
-    const result = await JobIndexing.importData(data);
-
-    return res.status(201).json({
-      message: "Data seeded successfully",
-      stats: result,
-    });
-  } catch (error) {
-    console.error("Seeding error:", error);
-    return res.status(500).json({ message: "Failed to seed data", error });
   }
 });
 
