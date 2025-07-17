@@ -1,4 +1,4 @@
-// src/components/ui/Tabs.tsx
+// Dark Theme Tabs.tsx
 import { createContext, useContext, type ReactNode } from "react";
 import { clsx } from "clsx";
 
@@ -32,7 +32,7 @@ export function TabsList({ className, children }: TabsListProps) {
   return (
     <div
       className={clsx(
-        "inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-500",
+        "inline-flex h-12 items-center justify-center rounded-xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 p-1 text-gray-400",
         className
       )}
     >
@@ -59,10 +59,10 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
   return (
     <button
       className={clsx(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         isActive
-          ? "bg-white text-gray-950 shadow-sm"
-          : "text-gray-600 hover:text-gray-900",
+          ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg"
+          : "text-gray-300 hover:text-white hover:bg-gray-700/50",
         className
       )}
       onClick={() => onValueChange(value)}
@@ -93,7 +93,7 @@ export function TabsContent({ value, children, className }: TabsContentProps) {
   return (
     <div
       className={clsx(
-        "mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
+        "mt-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 animate-fade-in",
         className
       )}
     >

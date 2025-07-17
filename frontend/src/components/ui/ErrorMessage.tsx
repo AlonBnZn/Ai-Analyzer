@@ -1,35 +1,44 @@
-// src/components/ui/ErrorMessage.tsx
+// Dark Theme ErrorMessage.tsx
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+
 interface ErrorMessageProps {
   message: string;
-  error: Error | null;
+  error?: Error;
+  className?: string;
 }
 
-export default function ErrorMessage({ message, error }: ErrorMessageProps) {
+const ErrorMessage = ({
+  message,
+  error,
+  className = "",
+}: ErrorMessageProps) => {
   return (
-    <div className="rounded-lg border border-error-200 bg-error-50 p-4">
-      <div className="flex">
+    <div
+      className={`rounded-2xl bg-red-500/10 border border-red-500/20 p-6 ${className}`}
+    >
+      <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <svg
-            className="h-5 w-5 text-error-400"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <div className="p-2 rounded-xl bg-red-500/20">
+            <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+          </div>
         </div>
-        <div className="ml-3">
-          <h3 className="text-sm font-medium text-error-800">{message}</h3>
-          {error && (
-            <div className="mt-2 text-sm text-error-700">
-              {error ? error.message : "An unknown error occurred"}
-            </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-red-300 mb-1">Error</h3>
+          <p className="text-red-200 text-sm">{message}</p>
+          {error && process.env.NODE_ENV === "development" && (
+            <details className="mt-2">
+              <summary className="text-xs text-red-300 cursor-pointer hover:text-red-200">
+                Show details
+              </summary>
+              <pre className="mt-2 text-xs text-red-200 bg-red-900/20 rounded-lg p-2 overflow-auto">
+                {error.toString()}
+              </pre>
+            </details>
           )}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default ErrorMessage;
