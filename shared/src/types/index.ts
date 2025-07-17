@@ -1,3 +1,4 @@
+// Updated Shared Types - shared/src/types/index.ts
 export interface IndexingLog {
   _id: string;
   country_code: string;
@@ -56,20 +57,68 @@ export interface TimeSeriesData {
   client?: string;
 }
 
+export interface StatusDistribution {
+  status: string;
+  count: number;
+  percentage: number;
+}
+
+export interface HealthCheckResponse {
+  status: "OK" | "ERROR" | "healthy" | "unhealthy";
+  timestamp: string;
+  uptime?: number;
+  version?: string;
+  environment?: string;
+  service?: string;
+  checks?: {
+    database?: string;
+    repository?: string;
+    service?: string;
+  };
+}
+
+// Chat/Assistant Types
 export interface ChatMessage {
   id: string;
   message: string;
   response: string;
   timestamp: string;
   responseType: "text" | "table" | "chart";
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 export interface ChatResponse {
   message: string;
   type: "text" | "table" | "chart" | "error";
-  data?: any;
+  data?: Record<string, unknown>;
   query?: string;
+  timestamp: string;
+  metadata?: {
+    queryType?: string;
+    dataPoints?: number;
+    executionTime?: number;
+    chartType?: "line" | "bar" | "pie";
+  };
+}
+
+export interface SendChatMessageRequest {
+  message: string;
+  sessionId?: string;
+  conversationId?: string;
+}
+
+export interface SendChatMessageResponse {
+  success: boolean;
+  response?: string;
+  type?: "text" | "table" | "chart" | "error";
+  data?: ChatResponse;
+  error?: string;
+  conversationId?: string;
+  metadata?: {
+    queryType?: string;
+    dataPoints?: number;
+    executionTime?: number;
+  };
 }
 
 export interface APIResponse<T> {

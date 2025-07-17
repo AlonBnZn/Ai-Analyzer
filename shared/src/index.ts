@@ -1,16 +1,22 @@
+// Updated Shared Index - shared/src/index.ts
+
 // Export all types
 export * from "./types";
 export * from "./utils/constants";
 
-// You can also do named exports for better organization
+// Named exports for better organization
 export type {
   IndexingLog,
   DashboardFilters,
   DashboardMetrics,
   ClientPerformance,
   TimeSeriesData,
+  StatusDistribution,
+  HealthCheckResponse,
   ChatMessage,
   ChatResponse,
+  SendChatMessageRequest,
+  SendChatMessageResponse,
   APIResponse,
 } from "./types";
 
