@@ -1,4 +1,3 @@
-// Dark Theme LogsTable.tsx
 import { useState } from "react";
 import type { IndexingLog } from "@botson/shared";
 import {
