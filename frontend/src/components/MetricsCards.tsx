@@ -1,4 +1,3 @@
-// Dark Theme MetricsCards.tsx
 import type { DashboardMetrics } from "@botson/shared";
 import {
   DocumentTextIcon,
@@ -14,7 +13,6 @@ interface MetricsCardsProps {
 }
 
 const MetricsCards = ({ metrics }: MetricsCardsProps) => {
-  // Function to format large numbers
   const formatLargeNumber = (num: number): string => {
     if (num >= 1000000000) {
       return (num / 1000000000).toFixed(1).replace(/\.0$/, "") + "B";

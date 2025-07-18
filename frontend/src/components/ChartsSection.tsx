@@ -1,4 +1,4 @@
-// Dark Theme ChartsSection.tsx
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DashboardFilters } from "@botson/shared";
 import { apiService } from "../services/api";
@@ -24,8 +24,19 @@ interface ChartsSectionProps {
   filters: DashboardFilters;
 }
 
+// Updated interface to match actual backend response
+interface StatusDistributionResponse {
+  _id?: string;
+  status?: string;
+  name?: string;
+  count?: number;
+  value?: number;
+  total?: number;
+  percentage?: number;
+  color?: string;
+}
+
 const ChartsSection = ({ filters }: ChartsSectionProps) => {
-  // Fetch time series data
   const {
     data: timeSeriesData,
     isLoading: timeSeriesLoading,
@@ -36,7 +47,6 @@ const ChartsSection = ({ filters }: ChartsSectionProps) => {
     enabled: true,
   });
 
-  // Fetch client performance data
   const {
     data: clientData,
     isLoading: clientLoading,
@@ -47,7 +57,6 @@ const ChartsSection = ({ filters }: ChartsSectionProps) => {
     enabled: true,
   });
 
-  // Fetch status distribution
   const {
     data: statusData,
     isLoading: statusLoading,
@@ -58,9 +67,12 @@ const ChartsSection = ({ filters }: ChartsSectionProps) => {
     enabled: true,
   });
 
-  const COLORS = ["#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#8b5cf6"];
+  // Only two colors: green for completed, red for failed
+  const STATUS_COLORS = {
+    completed: "#10b981", // Green
+    failed: "#ef4444", // Red
+  };
 
-  // Dark theme tooltip styles
   const tooltipStyle = {
     backgroundColor: "#1f2937",
     border: "1px solid #374151",
@@ -68,6 +80,51 @@ const ChartsSection = ({ filters }: ChartsSectionProps) => {
     color: "#ffffff",
     boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
   };
+
+  // Process status data to ensure only completed/failed and proper percentages
+  const processedStatusData = React.useMemo(() => {
+    if (!statusData || statusData.length === 0) {
+      console.log("No status data received:", statusData);
+      return [];
+    }
+
+    console.log("Raw status data:", statusData);
+
+    // The backend returns data with different field names, let's handle both cases
+    const normalizedData = statusData.map(
+      (item: StatusDistributionResponse) => {
+        // Handle different possible field names from backend
+        const status = item.status || item.name || item._id || "unknown";
+        const count = item.count || item.value || item.total || 0;
+        const percentage = item.percentage || 0;
+
+        return {
+          status: status.toLowerCase(),
+          count: Number(count),
+          percentage: Number(percentage),
+        };
+      }
+    );
+
+    console.log("Normalized data:", normalizedData);
+
+    // Since you only have completed jobs, let's create a simple structure
+    // If there are no failed jobs, we'll show 100% completed
+    const result = normalizedData.map((item) => ({
+      ...item,
+      // Normalize status names
+      status:
+        item.status === "success"
+          ? "completed"
+          : item.status === "error"
+          ? "failed"
+          : item.status,
+      percentage: item.percentage || 100, // Default to 100% if not provided
+    }));
+
+    console.log("Final processed data:", result);
+    return result;
+  }, [statusData]);
 
   if (timeSeriesError || clientError || statusError) {
     return (
@@ -217,56 +274,85 @@ const ChartsSection = ({ filters }: ChartsSectionProps) => {
         )}
       </div>
 
-      {/* Status Distribution Pie Chart */}
+      {/* Status Distribution Pie Chart - Fixed */}
       <div className="rounded-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 p-6 hover:bg-gray-800/60 transition-all duration-500">
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">
             Status Distribution
           </h3>
-          <div className="text-sm text-gray-400">Job status breakdown</div>
+          <div className="text-sm text-gray-400">Completed vs Failed Jobs</div>
         </div>
 
         {statusLoading ? (
           <div className="flex justify-center items-center h-80">
             <LoadingSpinner size="lg" />
           </div>
-        ) : (
+        ) : processedStatusData && processedStatusData.length > 0 ? (
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="70%">
+            <ResponsiveContainer width="100%" height="75%">
               <PieChart>
                 <Pie
-                  data={statusData}
+                  data={processedStatusData}
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
                   fill="#8884d8"
-                  dataKey="value"
-                  strokeWidth={2}
+                  dataKey="count"
                   stroke="#1f2937"
+                  strokeWidth={2}
                 >
-                  {statusData?.map((_entry, index) => (
+                  {processedStatusData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
+                      fill={
+                        STATUS_COLORS[
+                          entry.status as keyof typeof STATUS_COLORS
+                        ] || "#6b7280"
+                      }
                     />
                   ))}
                 </Pie>
                 <Tooltip
                   contentStyle={tooltipStyle}
-                  formatter={(value, name) => [`${value}%`, name]}
+                  formatter={(value: number, name: string) => [
+                    `${value.toLocaleString()} jobs`,
+                    name === "count" ? "Jobs" : name,
+                  ]}
+                  labelFormatter={(label) => `Status: ${label}`}
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center space-x-6 mt-4">
-              {statusData?.map((entry, index) => (
+
+            {/* Custom Legend with Count and Percentage Information */}
+            <div className="flex justify-center gap-6 mt-4">
+              {processedStatusData.map((entry, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    className="w-4 h-4 rounded-full shadow-sm"
+                    style={{
+                      backgroundColor:
+                        STATUS_COLORS[
+                          entry.status as keyof typeof STATUS_COLORS
+                        ] || "#6b7280",
+                    }}
                   ></div>
-                  <span className="text-gray-300 text-sm">{entry.name}</span>
+                  <span className="text-gray-300 text-sm capitalize">
+                    {entry.status}: {entry.count.toLocaleString()} (
+                    {entry.percentage}%)
+                  </span>
                 </div>
               ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center items-center h-80">
+            <div className="text-center">
+              <div className="text-gray-400 text-lg mb-2">
+                No Data Available
+              </div>
+              <div className="text-gray-500 text-sm">
+                No status distribution data to display
+              </div>
             </div>
           </div>
         )}

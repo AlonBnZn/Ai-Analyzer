@@ -1,4 +1,3 @@
-// Enhanced ChatAssistant with Response Types - frontend/src/components/ChatAssistant.tsx
 import { useState, useRef, useEffect } from "react";
 import {
   PaperAirplaneIcon,
@@ -66,7 +65,6 @@ How can I help you today?`,
     "What is the average success rate across all clients?",
   ];
 
-  // Test connection on component mount
   useEffect(() => {
     const testConnection = async () => {
       setConnectionStatus("testing");
@@ -82,7 +80,6 @@ How can I help you today?`,
     testConnection();
   }, []);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -289,10 +286,10 @@ How can I help you today?`,
     if (msg.responseType === "chart" && msg.data && Array.isArray(msg.data)) {
       const chartData = msg.data as Record<string, unknown>[];
       const dataKeys = Object.keys(chartData[0] || {});
-      const xAxisKey = dataKeys[0]; // First key for X-axis
+      const xAxisKey = dataKeys[0]; 
       const yAxisKey =
         dataKeys.find((key) => typeof chartData[0][key] === "number") ||
-        dataKeys[1]; // First numeric key for Y-axis
+        dataKeys[1]; 
 
       console.log("Chart Debug:", {
         chartData: chartData.slice(0, 3),
@@ -373,7 +370,6 @@ How can I help you today?`,
       );
     }
 
-    // Fallback for unknown types
     return (
       <div className="whitespace-pre-wrap text-sm leading-relaxed">
         {msg.content}

@@ -1,4 +1,3 @@
-// Updated Shared Types - shared/src/types/index.ts
 export interface IndexingLog {
   _id: string;
   country_code: string;
